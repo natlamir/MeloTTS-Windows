@@ -8,7 +8,7 @@ LANGUAGE_CODE = "EN"
 LANGUAGE_MODEL = "EN-default"
 
 # Load the whisper model
-model = whisper.load_model("base")
+model = whisper.load_model("medium")
 
 # Get the list of WAV files in the input directory
 wav_files = [file for file in os.listdir(INPUT_FOLDER) if file.endswith(".wav")]

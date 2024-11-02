@@ -26,25 +26,46 @@ If you have trouble doing the download with the `python -m unidic download` you 
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 ```
 
+3. Prepare faster-whisper (optional for fast transcribing of audio files):
+   - Download cuda/cublas here [https://github.com/Purfview/whisper-standalone-win/releases/download/libs/cuBLAS.and.cuDNN_CUDA11_win_v2.7z](https://github.com/Purfview/whisper-standalone-win/releases/download/libs/cuBLAS.and.cuDNN_CUDA11_win_v2.7z), extract and place the 5 dll files directly into the `MeloTTS-Windows/melo/` folder
+   - To install faster-whisper (and prevent conflicts with it) run this from the conda window:
+```
+pip install faster-whisper==0.9.0
+pip install transformers==4.30.2 huggingface_hub==0.16.4
+```
+
 4. Run using:
 ```
 melo-ui
 ```
 
 # Local Training on Windows
+## Preparing Dataset
 1. In the `melo/data/example` folder, delete the example `metadata.list` file.
-2. If you need to convert mp3 to wav, create a folder called `mp3s` in the example folder and copy all your mp3 files into the `mp3s` folder
-3. With a conda window activated with the enviroment open in the `melo` folder, run `ConvertMp3toWav.bat` from the conda prompt. This will create a folder `data/example/wavs` with all of the converted wav files.
-4. Create a transcript file by running `python transcript.py` which will create a `data/example/metadata.list` file.
-5. Run `python preprocess_text.py --metadata data/example/metadata.list` to create the `train.list`, `config.json`, among other files in the `data/example` folder.
-6. Modify `config.json` to change the batch size, epochs, learning rate, etc.
-7. From the conda prompt run `train.bat` to start the training.
-8. File will be created within the `data/example/config` folder with the checkpoints and other logging information.
-9. To test out a checkpoint, run: `python infer.py --text "this is a test" -m "C:\ai\MeloTTS-Windows\melo\data\example\config\G_0.pth" -o output` changing the G_0 to the checkpoint you want to test with G_1000, G2000, etc.
-10. When you want to use a checkpoint from the UI, create a `melo/custom` folder and copy the .pth and `config.json` file over from the `data/example/config`, rename the .pth to a user-friendly name, and launch the UI to see it in the custom voice dropdown.
-11. To see the tensorboard, install `pip install tensorflow`
-12. Run `tensorboard --logdir=data\example\config`
-13. This will give you the local URL to view the tensorboard.
+2. MeloTTS expects wav audio files (with a sample rate of 44100Hz). If you need to convert audio to wav format (with 44100Hz sample rate), create a folder called `audio` in the example folder and copy all your audio files into the `audio` folder
+4. With a conda window activated with the enviroment open in the `melo` folder, run `ConvertAudiotoWav.bat` from the conda prompt. This will create a folder `data/example/wavs` with all of the converted wav files.
+5. Create a transcript file by running `transcript_fast.bat` which will create a `data/example/metadata.list` file using faster-whisper. Alternately, you can run `python transcript.py` to use the original whisper.
+6. Run `python preprocess_text.py --metadata data/example/metadata.list` to create the `train.list`, `config.json`, among other files in the `data/example` folder.
+7. Modify `config.json` to change the batch size, epochs, learning rate, etc.
+  - ⚠️ **Important, If you plan to Resume Training Later:**
+    - The `eval_interval` setting determines how frequently your model is saved during training
+    - For example, if `eval_interval=1000`, the model saves only once every 1000 steps
+    - If you stop training between save points, any progress since the last save will be lost
+    - For safer training sessions that you may need to resume later, use a smaller `eval_interval` value
+    - You can also adjust `n_ckpts_to_keep` to limit the max models kept (if `n_ckpts_to_keep=5`, it will delete the oldest models when their are more than 5 saved models)
+## Start Training
+1. From the conda prompt run `train.bat` to start the training.
+2. File will be created within the `data/example/config` folder with the checkpoints and other logging information.
+3. To test out a checkpoint, run: `python infer.py --text "this is a test" -m "C:\ai\MeloTTS-Windows\melo\data\example\config\G_0.pth" -o output` changing the G_0 to the checkpoint you want to test with G_1000, G2000, etc.
+4. When you want to use a checkpoint from the UI, create a `melo/custom` folder and copy the .pth and `config.json` file over from the `data/example/config`, rename the .pth to a user-friendly name, and launch the UI to see it in the custom voice dropdown.
+5. To see the tensorboard, install `pip install tensorflow`
+6. Run `tensorboard --logdir=data\example\config`
+7. This will give you the local URL to view the tensorboard.
+## Resuming Training
+1. From the conda prompt run `train.bat` again to resume the training. The training will resume from the newest G_XXXX.pth file.
+## Trimming Model
+You can trim your model to make it a way smaller filesize (which will make it load faster during the model loading process). When testing, this made the model filesize about 66% smaller. Note the created trimmed model is for inference-only(using the model just to generate audio from text) and you won't be able to train it further.
+1. Open `trim_models.bat` file in a text editor to change the directory to your G_XXXX.pth files and the save location, save the changes, then run `trim_models.bat` to create a trimmed model for inference only.
 
 # Original Readme:
 <div align="center">
